@@ -1,0 +1,61 @@
+name: Publicar OfficeCraft para iPhone
+
+# Baja cada día los últimos releases web oficiales de WordCraft, DeckCraft y GridCraft,
+# arma las 3 PWAs optimizadas para iPhone + el portal OfficeCraft y los publica gratis en GitHub Pages.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Pillow (íconos iOS)
+        run: pip install pillow
+
+      - name: Descargar últimos builds web oficiales (WordCraft, DeckCraft, GridCraft)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/descargar_web.py web
+
+      - name: Armar sitio PWA para iPhone
+        run: python scripts/preparar.py web assets _site
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v5
+
+      # Mantiene activa la revisión diaria en repos con poca actividad (regla de 60 días de GitHub).
+      - name: Mantener activa la revisión diaria
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/publicar.yml/enable"

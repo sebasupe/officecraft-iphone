@@ -1,0 +1,713 @@
+/* OfficeCraft para iPhone: sistema de diseño fiel a Word, PowerPoint y Excel para iOS. */
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface-2: #e9ebef;
+  --bar: rgba(252, 252, 254, 0.94);
+  --fg: #18191c;
+  --muted: #666a73;
+  --line: rgba(60, 60, 67, 0.13);
+  --brand: #185abd;
+  --brand-press: #124696;
+  --brand-soft: rgba(24, 90, 189, 0.13);
+  --accent: var(--brand);
+  --accent-press: var(--brand-press);
+  --accent-soft: var(--brand-soft);
+  --on-accent: #ffffff;
+  --star: #f59f00;
+  --danger: #d92d20;
+  --doc-bg: #e5e7eb;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --top: env(safe-area-inset-top, 0px);
+  --bottom: env(safe-area-inset-bottom, 0px);
+  --left: env(safe-area-inset-left, 0px);
+  --right: env(safe-area-inset-right, 0px);
+  color-scheme: light;
+}
+
+/* Identidad visual exacta de cada app de Office para iPhone */
+:root[data-app="word"] {
+  --brand: #185abd;
+  --brand-press: #124594;
+  --brand-soft: rgba(24, 90, 189, 0.14);
+}
+:root[data-app="deck"] {
+  --brand: #c43e1c;
+  --brand-press: #9e3014;
+  --brand-soft: rgba(196, 62, 28, 0.14);
+}
+:root[data-app="grid"] {
+  --brand: #107c41;
+  --brand-press: #0b5d30;
+  --brand-soft: rgba(16, 124, 65, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --bar: rgba(24, 24, 27, 0.94);
+    --fg: #f5f5f7;
+    --muted: #9a9aa2;
+    --line: rgba(235, 235, 245, 0.14);
+    --doc-bg: #141416;
+    --shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --star: #fcc419;
+    --danger: #ff453a;
+    color-scheme: dark;
+  }
+  :root[data-app="word"]:not([data-theme="light"]) { --brand: #4b8df8; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
+  :root[data-app="deck"]:not([data-theme="light"]) { --brand: #f26c47; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
+  :root[data-app="grid"]:not([data-theme="light"]) { --brand: #2fb167; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
+}
+
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --bar: rgba(24, 24, 27, 0.94);
+  --fg: #f5f5f7;
+  --muted: #9a9aa2;
+  --line: rgba(235, 235, 245, 0.14);
+  --doc-bg: #141416;
+  --shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --star: #fcc419;
+  --danger: #ff453a;
+  color-scheme: dark;
+}
+:root[data-theme="dark"][data-app="word"] { --brand: #4b8df8; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
+:root[data-theme="dark"][data-app="deck"] { --brand: #f26c47; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
+:root[data-theme="dark"][data-app="grid"] { --brand: #2fb167; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+body { position: fixed; inset: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, textarea { font: inherit; color: inherit; -webkit-user-select: text; user-select: text; }
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+svg.ic { width: 21px; height: 21px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.85; stroke-linecap: round; stroke-linejoin: round; }
+svg.ic.ic-fill { fill: currentColor; stroke: currentColor; }
+[hidden] { display: none !important; }
+
+/* ---------- Splash de instalación y carga ---------- */
+#oc-splash {
+  position: fixed; inset: 0; z-index: 90;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px; background: var(--bg); color: var(--fg);
+  transition: opacity 0.3s ease;
+}
+#oc-splash.oc-out { opacity: 0; pointer-events: none; }
+#oc-splash img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+#oc-splash h1 { margin: 4px 0 0; font-size: 23px; font-weight: 700; letter-spacing: -0.02em; }
+#oc-track { width: min(260px, 70vw); height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+#oc-bar { width: 3%; height: 100%; background: var(--brand); transition: width 0.14s linear; }
+#oc-status { color: var(--muted); font-size: 14px; min-height: 1.4em; text-align: center; }
+#oc-error { max-width: 320px; color: var(--danger); font-size: 13px; text-align: center; white-space: pre-wrap; }
+
+/* ---------- Pantallas principales ---------- */
+.oc-screen { position: fixed; inset: 0; width: 100%; max-width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
+#oc-editor { z-index: 1; background: var(--doc-bg); }
+#oc-home { z-index: 2; background: var(--bg); transition: transform 0.26s cubic-bezier(.32, .72, 0, 1), opacity 0.24s ease; }
+body.oc-in-editor #oc-home { transform: translateX(-24%); opacity: 0; pointer-events: none; }
+body:not(.oc-in-editor) #oc-editor { visibility: hidden; }
+
+/* ---------- Cabecera Home (estilo Microsoft Office para iPhone) ---------- */
+.oc-app-head {
+  flex: none;
+  padding: calc(var(--top) + 8px) calc(var(--right) + 16px) 10px calc(var(--left) + 16px);
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--line);
+  z-index: 4;
+}
+.oc-head-row { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.oc-brand-logo { width: 32px; height: 32px; border-radius: 8px; flex: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16); }
+.oc-head-title { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.025em; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-head-btn {
+  width: 36px; height: 36px; border-radius: 18px; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--fg); flex: none;
+}
+.oc-head-btn:active { opacity: 0.7; }
+.oc-head-btn.oc-active { background: var(--brand-soft); color: var(--brand); }
+.oc-head-btn.oc-brand-btn { background: var(--brand); color: var(--on-accent); }
+.oc-head-back {
+  display: inline-flex; align-items: center; gap: 2px; height: 36px; padding-right: 8px;
+  color: var(--brand); font-weight: 600; font-size: 16px;
+}
+.oc-search-box {
+  margin-top: 8px; display: flex; align-items: center; gap: 8px;
+  height: 37px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); color: var(--muted);
+}
+.oc-search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 15px; color: var(--fg); }
+.oc-search-box .ic { width: 17px; height: 17px; }
+.oc-clear-btn { width: 20px; height: 20px; border-radius: 10px; display: grid; place-items: center; background: var(--muted); color: var(--surface); }
+.oc-clear-btn .ic { width: 12px; height: 12px; stroke-width: 2.4; }
+
+/* ---------- Cuerpo desplazable Home ---------- */
+.oc-tab-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 12px calc(var(--right) + 16px) calc(var(--bottom) + 130px) calc(var(--left) + 16px);
+}
+
+/* Carrusel de plantillas (exacto a Word / PowerPoint / Excel de iPhone) */
+.oc-tpl-strip {
+  display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  margin: 0 -16px 6px; padding: 2px 16px 8px;
+}
+.oc-tpl-strip::-webkit-scrollbar { display: none; }
+.oc-tpl-card {
+  flex: none; width: 104px; display: flex; flex-direction: column; gap: 6px; text-align: left;
+}
+.oc-tpl-card:active { transform: scale(0.96); }
+.oc-tpl-preview {
+  width: 104px; height: 128px; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; padding: 10px;
+}
+.oc-tpl-preview.oc-tpl-wide { width: 136px; height: 90px; }
+.oc-tpl-card.oc-tpl-wide { width: 136px; }
+.oc-tpl-preview .ic { width: 28px; height: 28px; color: var(--brand); }
+.oc-tpl-card b { font-size: 12.5px; font-weight: 600; line-height: 1.2; text-align: center; color: var(--fg); }
+.oc-tpl-lines { width: 100%; display: flex; flex-direction: column; gap: 5px; }
+.oc-tpl-lines i { display: block; height: 4px; border-radius: 2px; background: var(--surface-2); font-style: normal; }
+.oc-tpl-lines i.oc-tpl-accent { height: 7px; background: var(--brand); opacity: 0.85; width: 70%; }
+
+/* Filtros y secciones */
+.oc-filter-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.oc-pills { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.oc-pills::-webkit-scrollbar { display: none; }
+.oc-chip {
+  height: 33px; padding: 0 13px; border-radius: 17px; font-size: 13.5px; font-weight: 600;
+  background: var(--surface); color: var(--muted); border: 1px solid var(--line);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; flex: none;
+}
+.oc-chip[aria-pressed="true"] { background: var(--brand); color: var(--on-accent); border-color: transparent; }
+.oc-chip .ic { width: 14px; height: 14px; }
+.oc-sort-btn {
+  height: 33px; padding: 0 8px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  color: var(--brand); display: inline-flex; align-items: center; gap: 4px; flex: none;
+}
+.oc-sort-btn .ic { width: 15px; height: 15px; }
+
+.oc-section-head { margin: 14px 0 8px; display: flex; align-items: center; justify-content: space-between; }
+.oc-section-head h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em; }
+.oc-section-head small { color: var(--muted); font-size: 13px; }
+.oc-link-btn { color: var(--brand); font-size: 14px; font-weight: 600; padding: 4px 2px; }
+
+/* Lista de archivos estilo Office iPhone */
+.oc-recents {
+  list-style: none; margin: 0; padding: 0; border-radius: 15px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.oc-recent { display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 12px; position: relative; }
+.oc-recent + .oc-recent::before { content: ""; position: absolute; left: 68px; right: 0; top: 0; border-top: 1px solid var(--line); }
+.oc-recent-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; text-align: left; }
+.oc-recent-open:active { opacity: 0.65; }
+.oc-thumb {
+  width: 44px; height: 54px; flex: none; border-radius: 8px; overflow: hidden;
+  background: var(--brand-soft); display: grid; place-items: center; color: var(--brand);
+  border: 1px solid var(--line); position: relative;
+}
+.oc-thumb.oc-thumb-wide { width: 54px; height: 38px; }
+.oc-thumb img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.oc-thumb-tag {
+  position: absolute; bottom: 2px; left: 2px; font-size: 8px; font-weight: 800; letter-spacing: 0.03em;
+  padding: 1px 4px; border-radius: 3px; background: var(--brand); color: #fff; text-transform: uppercase;
+}
+.oc-recent-text { min-width: 0; flex: 1; }
+.oc-recent-text b { display: block; font-weight: 600; font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-recent-text small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-recent-tags { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+.oc-mini-badge { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.oc-mini-badge.oc-brand-badge { background: var(--brand-soft); color: var(--brand); }
+.oc-star-btn, .oc-recent-more {
+  width: 36px; height: 40px; display: grid; place-items: center; color: var(--muted); flex: none; border-radius: 10px;
+}
+.oc-star-btn.oc-starred { color: var(--star); }
+.oc-star-btn .ic { width: 18px; height: 18px; }
+
+/* Vista cuadrícula */
+.oc-file-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.oc-file-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; position: relative;
+}
+.oc-file-card-tap { text-align: left; display: flex; flex-direction: column; flex: 1; }
+.oc-file-card-preview {
+  height: 120px; background: var(--brand-soft); display: grid; place-items: center; color: var(--brand);
+  overflow: hidden; border-bottom: 1px solid var(--line);
+}
+.oc-file-card-preview img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.oc-file-card-meta { padding: 8px 10px 10px; }
+.oc-file-card-meta b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+.oc-file-card-meta small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.oc-file-card-actions { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.oc-card-dot {
+  width: 28px; height: 28px; border-radius: 14px; display: grid; place-items: center;
+  background: rgba(24, 24, 28, 0.72); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.oc-card-dot.oc-starred { color: var(--star); }
+.oc-card-dot .ic { width: 14px; height: 14px; }
+
+/* Ubicaciones (pestaña Abrir / Archivos) */
+.oc-loc-card { background: var(--surface); border-radius: 15px; border: 1px solid var(--line); overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow-sm); }
+.oc-loc-row { width: 100%; min-height: 52px; padding: 8px 14px; display: flex; align-items: center; gap: 12px; text-align: left; position: relative; }
+.oc-loc-row + .oc-loc-row::before { content: ""; position: absolute; left: 58px; right: 0; top: 0; border-top: 1px solid var(--line); }
+.oc-loc-row:active { background: var(--surface-2); }
+.oc-loc-ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; flex: none; }
+.oc-loc-ico .ic { width: 18px; height: 18px; }
+.oc-loc-info { flex: 1; min-width: 0; }
+.oc-loc-info b { display: block; font-size: 15px; font-weight: 600; }
+.oc-loc-info small { display: block; font-size: 12.5px; color: var(--muted); }
+.oc-loc-chev { color: var(--muted); opacity: 0.6; }
+
+.oc-empty {
+  text-align: center; color: var(--muted); padding: 30px 20px; border-radius: 15px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 14.5px;
+}
+.oc-empty .ic { width: 40px; height: 40px; color: var(--brand); margin-bottom: 8px; }
+.oc-empty b { display: block; color: var(--fg); font-size: 16px; margin-bottom: 4px; }
+.oc-empty-btn {
+  margin-top: 14px; height: 40px; padding: 0 20px; border-radius: 20px;
+  background: var(--brand); color: var(--on-accent); font-weight: 600; font-size: 14.5px;
+}
+
+/* FAB flotante + */
+.oc-create-fab {
+  position: fixed; z-index: 6;
+  right: calc(var(--right) + 18px);
+  bottom: calc(var(--bottom) + 72px);
+  width: 56px; height: 56px; border-radius: 28px;
+  display: grid; place-items: center;
+  background: var(--brand); color: var(--on-accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  transition: transform 0.14s ease;
+}
+.oc-create-fab:active { transform: scale(0.92); background: var(--brand-press); }
+.oc-create-fab .ic { width: 26px; height: 26px; stroke-width: 2.3; }
+
+/* Barra inferior de pestañas Home (estilo Office iPhone) */
+.oc-tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  padding: 5px calc(var(--right) + 8px) calc(var(--bottom) + 5px) calc(var(--left) + 8px);
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid var(--line);
+}
+.oc-tab-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; height: 48px; color: var(--muted); font-size: 11px; font-weight: 600; border-radius: 10px;
+}
+.oc-tab-btn .ic { width: 22px; height: 22px; }
+.oc-tab-btn[aria-current="page"] { color: var(--brand); }
+
+/* ---------- Editor de documentos (Word / PowerPoint / Excel iPhone) ---------- */
+.oc-bar {
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  z-index: 5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.oc-top {
+  padding: var(--top) calc(var(--right) + 4px) 0 calc(var(--left) + 4px);
+  display: flex; align-items: center; min-height: calc(var(--top) + 46px);
+  border-bottom: 1px solid var(--line); flex: none;
+}
+/* Cabecera con acento de color Microsoft Office (opcional vía .oc-top-brand) */
+.oc-top.oc-top-brand {
+  background: var(--brand);
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+.oc-top.oc-top-brand .oc-icon-btn { color: #ffffff; }
+.oc-top.oc-top-brand .oc-icon-btn:active { background: rgba(255, 255, 255, 0.18); }
+.oc-top.oc-top-brand .oc-title small { color: rgba(255, 255, 255, 0.8); }
+
+.oc-icon-btn {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 19px; color: var(--fg); flex: none;
+}
+.oc-icon-btn.oc-accent { color: var(--brand); }
+.oc-icon-btn.oc-on { background: var(--brand-soft); color: var(--brand); }
+.oc-top-brand .oc-icon-btn.oc-on { background: rgba(255, 255, 255, 0.24); color: #fff; }
+.oc-icon-btn:active { background: var(--brand-soft); }
+.oc-icon-btn[disabled] { opacity: 0.35; }
+.oc-title { flex: 1; min-width: 0; text-align: left; padding: 0 4px; }
+.oc-title b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-title small { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-text-btn { padding: 0 11px; height: 38px; color: var(--brand); font-weight: 600; font-size: 15px; flex: none; }
+.oc-top-brand .oc-text-btn { color: #fff; }
+
+.oc-search {
+  flex: 1; display: flex; align-items: center; gap: 6px; margin: 0 4px 0 6px;
+  padding: 0 10px; height: 34px; border-radius: 10px; background: var(--surface-2); color: var(--muted);
+}
+.oc-top-brand .oc-search { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.oc-top-brand .oc-search input { color: #fff; }
+.oc-top-brand .oc-search input::placeholder { color: rgba(255, 255, 255, 0.72); }
+.oc-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 15px; color: var(--fg); }
+
+/* Lienzo recortado con precisión al viewport útil del motor */
+#oc-doc {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--doc-bg);
+}
+.oc-canvas {
+  position: absolute;
+  left: var(--oc-crop-left, 0px);
+  top: var(--oc-crop-top, 0px);
+  width: var(--oc-canvas-w, 100%);
+  height: var(--oc-canvas-h, 100%);
+  display: block;
+  outline: none;
+  touch-action: none;
+}
+
+.oc-press-ring {
+  position: absolute; z-index: 6; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  border-radius: 50%; border: 2.5px solid var(--brand); background: var(--brand-soft);
+  pointer-events: none; animation: oc-ring 0.38s ease-out forwards;
+}
+@keyframes oc-ring {
+  0% { transform: scale(0.45); opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+.oc-busy {
+  position: absolute; inset: 0; z-index: 8;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: var(--doc-bg); color: var(--muted); font-size: 14.5px;
+}
+.oc-spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand); animation: oc-spin 0.8s linear infinite; }
+@keyframes oc-spin { to { transform: rotate(360deg); } }
+
+/* Píldora flotante (página / diapositiva / zoom) */
+.oc-float-pill {
+  position: absolute; z-index: 4; right: 12px; bottom: 10px;
+  height: 28px; padding: 0 11px; border-radius: 14px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(24, 24, 28, 0.78); color: #fff; font-size: 12px; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+
+/* Barra rápida inferior estilo Microsoft Office iPhone (encima del teclado o en el pie) */
+.oc-bottom {
+  flex: none; border-top: 1px solid var(--line);
+  padding: 4px calc(var(--right) + 6px) calc(var(--bottom) + 4px) calc(var(--left) + 6px);
+}
+.oc-quickbar { display: flex; align-items: center; gap: 4px; }
+.oc-quick-scroll {
+  flex: 1; display: flex; align-items: center; gap: 3px;
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.oc-quick-scroll::-webkit-scrollbar { display: none; }
+.oc-qbtn {
+  flex: none; min-width: 40px; height: 38px; padding: 0 8px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 13px; font-weight: 650; color: var(--fg);
+}
+.oc-qbtn .ic { width: 19px; height: 19px; }
+.oc-qbtn:active { background: var(--surface-2); }
+.oc-qbtn[aria-pressed="true"] { background: var(--brand-soft); color: var(--brand); }
+.oc-drawer-toggle {
+  flex: none; width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--brand); color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+.oc-drawer-toggle:active { transform: scale(0.94); }
+
+/* Cajón desplegable de Cinta móvil (exacto a Inicio/Insertar/Disposición/Revisar/Vista de Office iPhone) */
+.oc-ribbon-drawer {
+  position: relative; z-index: 6; flex: none;
+  background: var(--surface); border-top: 1px solid var(--line);
+  max-height: 44vh; display: flex; flex-direction: column;
+  padding-bottom: var(--bottom);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.12);
+  animation: oc-up 0.2s cubic-bezier(.32, .72, 0, 1);
+}
+.oc-ribbon-tabs {
+  display: flex; align-items: center; gap: 2px; padding: 6px 10px;
+  border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none;
+}
+.oc-ribbon-tabs::-webkit-scrollbar { display: none; }
+.oc-rtab {
+  flex: none; height: 30px; padding: 0 12px; border-radius: 15px;
+  font-size: 13px; font-weight: 650; color: var(--muted); white-space: nowrap;
+}
+.oc-rtab[aria-selected="true"] { background: var(--brand-soft); color: var(--brand); }
+.oc-ribbon-close {
+  margin-left: auto; flex: none; width: 30px; height: 30px; border-radius: 15px;
+  display: grid; place-items: center; color: var(--muted);
+}
+.oc-ribbon-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 10px 14px 14px;
+}
+.oc-rgroup { margin-bottom: 12px; }
+.oc-rgroup:last-child { margin-bottom: 0; }
+.oc-rgroup-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--muted); margin: 0 2px 6px;
+}
+.oc-rrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.oc-rbtn {
+  min-height: 36px; padding: 0 11px; border-radius: 10px;
+  background: var(--surface-2); color: var(--fg);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 13.5px; font-weight: 600;
+}
+.oc-rbtn .ic { width: 17px; height: 17px; }
+.oc-rbtn:active { opacity: 0.72; }
+.oc-rbtn[aria-pressed="true"] { background: var(--brand); color: #fff; }
+.oc-rgrid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.oc-rgrid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.oc-rgrid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.oc-rtile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 6px; border-radius: 11px; background: var(--surface-2);
+  font-size: 12px; font-weight: 600; text-align: center;
+}
+.oc-rtile .ic { width: 20px; height: 20px; color: var(--brand); }
+.oc-rtile:active { opacity: 0.72; }
+
+/* ---------- Barra de fórmulas nativa (Excel / GridCraft iPhone) ---------- */
+.oc-formula-bar {
+  flex: none; display: flex; align-items: center; gap: 6px;
+  padding: 5px calc(var(--right) + 8px) 5px calc(var(--left) + 8px);
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  z-index: 4;
+}
+.oc-cell-addr {
+  min-width: 48px; height: 32px; padding: 0 8px; border-radius: 8px;
+  background: var(--surface-2); color: var(--fg);
+  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.oc-fx-btn {
+  width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+  color: var(--brand); background: var(--brand-soft); flex: none;
+}
+.oc-fx-btn .ic { width: 17px; height: 17px; }
+.oc-fx-input {
+  flex: 1; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  font-size: 14.5px; outline: 0;
+}
+.oc-fx-input:focus { border-color: var(--brand); background: var(--surface); }
+.oc-fx-act {
+  width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none;
+}
+.oc-fx-act.oc-ok { background: var(--brand); color: #fff; }
+.oc-fx-act.oc-cancel { background: var(--surface-2); color: var(--danger); }
+
+/* Barra de estadísticas rápidas y pestañas de hojas (Excel iPhone) */
+.oc-stats-bar {
+  flex: none; display: flex; align-items: center; gap: 12px; overflow-x: auto; scrollbar-width: none;
+  padding: 4px 12px; background: var(--brand-soft); color: var(--brand);
+  font-size: 12px; font-weight: 650; border-top: 1px solid var(--line);
+}
+.oc-sheets-bar {
+  flex: none; display: flex; align-items: center; gap: 4px;
+  padding: 5px calc(var(--right) + 8px) 5px calc(var(--left) + 8px);
+  background: var(--surface); border-top: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none;
+}
+.oc-sheets-bar::-webkit-scrollbar { display: none; }
+.oc-sheet-tab {
+  flex: none; height: 30px; padding: 0 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--muted); background: transparent;
+  display: inline-flex; align-items: center; gap: 5px; position: relative;
+}
+.oc-sheet-tab[aria-selected="true"] {
+  background: var(--brand-soft); color: var(--brand); font-weight: 700;
+}
+.oc-sheet-add {
+  flex: none; width: 30px; height: 30px; border-radius: 8px;
+  display: grid; place-items: center; color: var(--brand); background: var(--surface-2);
+}
+.oc-sheet-add .ic { width: 17px; height: 17px; }
+
+/* ---------- Tira de diapositivas (PowerPoint / DeckCraft iPhone) ---------- */
+.oc-filmstrip {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 7px calc(var(--right) + 10px) 7px calc(var(--left) + 10px);
+  background: var(--surface); border-top: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.oc-filmstrip::-webkit-scrollbar { display: none; }
+.oc-slide-thumb {
+  flex: none; width: 78px; height: 48px; border-radius: 7px; position: relative;
+  background: #ffffff; border: 2px solid var(--line); overflow: hidden;
+  display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+.oc-slide-thumb[aria-current="true"] { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+.oc-slide-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.oc-slide-num {
+  position: absolute; left: 3px; bottom: 2px; padding: 0 4px; border-radius: 4px;
+  background: rgba(0, 0, 0, 0.68); color: #fff; font-size: 9.5px; font-weight: 700;
+}
+.oc-slide-add {
+  flex: none; width: 58px; height: 48px; border-radius: 7px;
+  border: 1.5px dashed var(--brand); color: var(--brand); background: var(--brand-soft);
+  display: grid; place-items: center;
+}
+.oc-notes-drawer {
+  flex: none; padding: 8px 12px; background: var(--surface); border-top: 1px solid var(--line);
+}
+.oc-notes-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.oc-notes-area {
+  width: 100%; min-height: 76px; max-height: 150px; padding: 8px 10px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  color: var(--fg); font-size: 14px; resize: none; outline: 0;
+}
+
+/* ---------- Modo Presentación a pantalla completa (PowerPoint Show) ---------- */
+body.oc-show .oc-top,
+body.oc-show .oc-bottom,
+body.oc-show .oc-filmstrip,
+body.oc-show .oc-notes-drawer,
+body.oc-show .oc-ribbon-drawer { display: none !important; }
+body.oc-show #oc-doc { background: #000000; }
+.oc-show-hud {
+  position: fixed; z-index: 30; top: calc(var(--top) + 10px); right: calc(var(--right) + 12px);
+  display: flex; align-items: center; gap: 6px;
+}
+.oc-show-pill {
+  height: 36px; padding: 0 13px; border-radius: 18px;
+  background: rgba(20, 20, 24, 0.78); color: #fff; font-size: 13px; font-weight: 650;
+  display: inline-flex; align-items: center; gap: 6px;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+
+/* ---------- Modos Modal / Escritorio PC / Inmersivo ---------- */
+body.oc-immersive .oc-top { position: absolute; left: 0; right: 0; top: 0; transform: translateY(-100%); opacity: 0; pointer-events: none; }
+body.oc-immersive .oc-bottom,
+body.oc-immersive .oc-filmstrip,
+body.oc-immersive .oc-sheets-bar { position: absolute; left: 0; right: 0; bottom: 0; transform: translateY(110%); opacity: 0; pointer-events: none; }
+body.oc-modal .oc-top,
+body.oc-modal .oc-bottom,
+body.oc-modal .oc-formula-bar,
+body.oc-modal .oc-sheets-bar,
+body.oc-modal .oc-filmstrip,
+body.oc-modal .oc-ribbon-drawer,
+body.oc-desktop .oc-top,
+body.oc-desktop .oc-bottom,
+body.oc-desktop .oc-formula-bar,
+body.oc-desktop .oc-sheets-bar,
+body.oc-desktop .oc-filmstrip,
+body.oc-desktop .oc-ribbon-drawer { display: none !important; }
+body.oc-modal #oc-doc { margin-top: var(--top); }
+body.oc-desktop #oc-doc { margin: var(--top) 0 var(--bottom); }
+
+.oc-back-mobile {
+  position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--bottom) + 14px);
+  padding: 10px 18px; border-radius: 22px; background: var(--brand); color: #fff;
+  font-weight: 650; font-size: 14px; box-shadow: var(--shadow); white-space: nowrap;
+}
+
+/* ---------- Hojas modales iOS (Bottom Sheets) ---------- */
+.oc-sheet-wrap { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; justify-content: flex-end; }
+.oc-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.38); animation: oc-fade 0.18s ease; }
+.oc-sheet {
+  position: relative; background: var(--bg); border-radius: 20px 20px 0 0; max-height: 86vh; overflow-y: auto;
+  padding: 8px calc(var(--right) + 16px) calc(var(--bottom) + 18px) calc(var(--left) + 16px);
+  animation: oc-up 0.24s cubic-bezier(.32, .72, 0, 1);
+}
+.oc-grabber { width: 38px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 10px; }
+.oc-sheet h3 { margin: 2px 2px 10px; font-size: 18.5px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.oc-sheet h3 span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-sheet p { margin: 0 4px 12px; color: var(--muted); font-size: 13.5px; line-height: 1.4; }
+.oc-list { background: var(--surface); border-radius: 14px; overflow: hidden; margin-bottom: 12px; border: 1px solid var(--line); }
+.oc-item {
+  width: 100%; min-height: 48px; display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; text-align: left; position: relative; font-size: 15px;
+}
+.oc-item + .oc-item::before { content: ""; position: absolute; left: 48px; right: 0; top: 0; border-top: 1px solid var(--line); }
+.oc-item .ic { color: var(--brand); width: 20px; height: 20px; }
+.oc-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-item small { color: var(--muted); font-size: 12.5px; flex: none; }
+.oc-item.oc-danger, .oc-item.oc-danger .ic { color: var(--danger); }
+.oc-item:active { background: var(--surface-2); }
+
+.oc-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; min-height: 48px; position: relative; }
+.oc-toggle-row + .oc-toggle-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; border-top: 1px solid var(--line); }
+.oc-switch { width: 48px; height: 28px; border-radius: 14px; background: var(--surface-2); position: relative; transition: background 0.18s ease; flex: none; }
+.oc-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 12px; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22); transition: transform 0.18s ease; }
+.oc-switch[aria-checked="true"] { background: var(--brand); }
+.oc-switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+.oc-seg { display: flex; padding: 3px; border-radius: 11px; background: var(--surface-2); margin: 0 0 12px; }
+.oc-seg button { flex: 1; height: 33px; border-radius: 8px; font-size: 13px; font-weight: 550; }
+.oc-seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); font-weight: 650; }
+.oc-label { margin: 0 4px 6px; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.oc-field { width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line); padding: 0 13px; background: var(--surface); margin-bottom: 11px; font-size: 15.5px; outline: 0; }
+.oc-field:focus { border-color: var(--brand); }
+.oc-primary { width: 100%; height: 46px; border-radius: 13px; background: var(--brand); color: var(--on-accent); font-weight: 650; font-size: 15.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.oc-primary:active { background: var(--brand-press); }
+.oc-secondary { width: 100%; height: 44px; border-radius: 13px; background: var(--surface); color: var(--brand); border: 1px solid var(--line); font-weight: 650; font-size: 15px; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.oc-btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.oc-btn-row > button { flex: 1; margin: 0; }
+
+/* Paleta de colores estilo Microsoft Office */
+.oc-color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; margin-bottom: 10px; }
+.oc-color-dot {
+  aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.oc-color-dot:active { transform: scale(0.9); }
+.oc-color-dot.oc-color-clear {
+  background: linear-gradient(135deg, transparent 45%, var(--danger) 46%, var(--danger) 54%, transparent 55%), var(--surface);
+}
+
+/* Avisos toast */
+.oc-toast {
+  position: fixed; z-index: 80; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--bottom) + 78px); max-width: min(350px, 90vw);
+  padding: 10px 16px; border-radius: 14px; background: rgba(24, 24, 28, 0.94); color: #fff;
+  font-size: 13.5px; font-weight: 500; line-height: 1.35; text-align: center;
+  box-shadow: var(--shadow); transition: opacity 0.3s ease;
+}
+
+@keyframes oc-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes oc-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (min-width: 700px) {
+  .oc-file-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .oc-sheet { max-width: 540px; margin: 0 auto 18px; width: 100%; border-radius: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #oc-home, .oc-sheet, .oc-scrim, .oc-bar, .oc-ribbon-drawer { transition: none; animation: none; }
+}

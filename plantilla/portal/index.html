@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>OfficeCraft para iPhone</title>
+    <meta name="description" content="WordCraft, DeckCraft y GridCraft para iPhone: documentos Word, presentaciones PowerPoint y hojas Excel sin conexión." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="OfficeCraft" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./portal.css" />
+    <script>
+      window.OC_VERSIONS = __VERSIONS_JSON__;
+    </script>
+  </head>
+  <body>
+    <header class="pt-head">
+      <div class="pt-head-row">
+        <img class="pt-logo" src="./icons/icon-192.png" alt="" />
+        <div class="pt-head-txt">
+          <h1>OfficeCraft</h1>
+          <small>Word · PowerPoint · Excel para iPhone</small>
+        </div>
+        <button class="pt-info-btn" id="pt-install-btn" type="button">Instalar</button>
+      </div>
+      <label class="pt-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z M20 20l-4.8-4.8" /></svg>
+        <input type="search" id="pt-search" placeholder="Buscar en Word, PowerPoint y Excel…" autocomplete="off" />
+      </label>
+    </header>
+
+    <main class="pt-main">
+      <section class="pt-apps" aria-label="Aplicaciones">
+        <a class="pt-app-card pt-word" href="./word/">
+          <img src="./word/icons/icon-192.png" alt="WordCraft" />
+          <div class="pt-app-info">
+            <b>WordCraft</b>
+            <small>Documentos Word (.docx)</small>
+            <span class="pt-ver">v__WORD_VER__</span>
+          </div>
+          <span class="pt-open-pill">Abrir</span>
+        </a>
+
+        <a class="pt-app-card pt-deck" href="./deck/">
+          <img src="./deck/icons/icon-192.png" alt="DeckCraft" />
+          <div class="pt-app-info">
+            <b>DeckCraft</b>
+            <small>Presentaciones (.pptx)</small>
+            <span class="pt-ver">v__DECK_VER__</span>
+          </div>
+          <span class="pt-open-pill">Abrir</span>
+        </a>
+
+        <a class="pt-app-card pt-grid" href="./grid/">
+          <img src="./grid/icons/icon-192.png" alt="GridCraft" />
+          <div class="pt-app-info">
+            <b>GridCraft</b>
+            <small>Hojas de cálculo (.xlsx)</small>
+            <span class="pt-ver">v__GRID_VER__</span>
+          </div>
+          <span class="pt-open-pill">Abrir</span>
+        </a>
+      </section>
+
+      <section class="pt-quick" aria-label="Crear nuevo">
+        <h2>Crear nuevo</h2>
+        <div class="pt-quick-grid">
+          <a class="pt-qcard pt-word" href="./word/?new=1"><b>+ Documento</b><small>Word .docx</small></a>
+          <a class="pt-qcard pt-deck" href="./deck/?new=1"><b>+ Presentación</b><small>PowerPoint .pptx</small></a>
+          <a class="pt-qcard pt-grid" href="./grid/?new=1"><b>+ Libro</b><small>Excel .xlsx</small></a>
+        </div>
+      </section>
+
+      <section class="pt-recents-sec" aria-label="Recientes">
+        <div class="pt-sec-head">
+          <h2>Recientes en este iPhone</h2>
+          <div class="pt-chips" id="pt-chips">
+            <button type="button" data-f="all" aria-pressed="true">Todos</button>
+            <button type="button" data-f="word" aria-pressed="false">Word</button>
+            <button type="button" data-f="deck" aria-pressed="false">PowerPoint</button>
+            <button type="button" data-f="grid" aria-pressed="false">Excel</button>
+          </div>
+        </div>
+        <div id="pt-recents"></div>
+      </section>
+
+      <section class="pt-guide" id="pt-guide">
+        <h2>Cómo instalar en tu iPhone</h2>
+        <ol>
+          <li>Puedes instalar <b>cada app por separado</b> (como Word, PowerPoint y Excel): abre <b>WordCraft</b>, <b>DeckCraft</b> o <b>GridCraft</b> arriba y en Safari toca <b>Compartir</b> → <b>Agregar a pantalla de inicio</b>.</li>
+          <li>También puedes agregar este portal <b>OfficeCraft</b> a tu pantalla de inicio para tener las 3 apps juntas en un solo lugar.</li>
+          <li>Cada app se guarda en el iPhone para funcionar <b>100 % sin conexión</b> y se actualiza sola al abrirla con internet cuando sale una nueva versión oficial.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="./portal.js"></script>
+  </body>
+</html>

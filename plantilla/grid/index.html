@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es" data-app="grid">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>GridCraft</title>
+    <meta name="description" content="GridCraft para iPhone: hojas de cálculo Excel .xlsx de código abierto sin conexión." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="GridCraft" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#107c41" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#101814" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./ui.css" />
+    <script>
+      window.OC_APP = { id: "grid", name: "GridCraft", ext: ".xlsx", version: "__APP_VERSION__" };
+      // Oculta nativamente la barra de título y pestaña Archivo de escritorio en GridCraft
+      if (!/[?&]chrome=/.test(location.search)) {
+        try {
+          var sep = location.search ? "&" : "?";
+          history.replaceState(history.state, "", location.pathname + location.search + sep + "chrome=none" + location.hash);
+        } catch (e) {}
+      }
+    </script>
+    __HEAD_LINKS__
+  </head>
+  <body>
+    <div id="oc-splash" role="status" aria-live="polite">
+      <img src="./icons/icon-192.png" alt="" />
+      <h1>GridCraft</h1>
+      <div id="oc-track"><div id="oc-bar"></div></div>
+      <div id="oc-status">Cargando…</div>
+      <div id="oc-error" hidden></div>
+    </div>
+
+    <!-- Shell principal estilo Microsoft Excel para iPhone -->
+    <section id="oc-home" class="oc-screen" aria-label="GridCraft Inicio">
+      <header class="oc-app-head" id="oc-app-head"></header>
+      <main class="oc-tab-body" id="oc-tab-body"></main>
+      <button class="oc-create-fab" id="oc-create-fab" type="button" aria-label="Nuevo libro"></button>
+      <nav class="oc-tabbar" id="oc-tabbar" aria-label="Navegación principal"></nav>
+    </section>
+
+    <!-- Editor de hojas de cálculo GridCraft -->
+    <section id="oc-editor" class="oc-screen" aria-label="Hoja de cálculo">
+      <header class="oc-bar oc-top oc-top-brand" id="oc-top"></header>
+      <div class="oc-formula-bar" id="oc-formula-bar">
+        <button class="oc-cell-addr" id="oc-cell-addr" type="button" aria-label="Ir a celda">A1</button>
+        <button class="oc-fx-btn" id="oc-fx-btn" type="button" aria-label="Insertar función"></button>
+        <input class="oc-fx-input" id="oc-fx-input" type="text" placeholder="Escribe un valor o =fórmula…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <button class="oc-fx-act oc-cancel" id="oc-fx-cancel" type="button" aria-label="Cancelar edición" hidden></button>
+        <button class="oc-fx-act oc-ok" id="oc-fx-ok" type="button" aria-label="Confirmar celda" hidden></button>
+      </div>
+      <div id="oc-doc">
+        <canvas id="gridcraft_canvas" class="oc-canvas" data-host="page" tabindex="0"></canvas>
+        <div class="oc-press-ring" id="oc-press-ring" hidden aria-hidden="true"></div>
+        <div class="oc-busy" id="oc-busy" hidden>
+          <div class="oc-spinner"></div>
+          <span id="oc-busy-text">Abriendo libro…</span>
+        </div>
+        <button class="oc-float-pill" id="oc-zoom-pill" type="button" hidden>100%</button>
+      </div>
+      <div class="oc-stats-bar" id="oc-stats-bar" hidden></div>
+      <div class="oc-sheets-bar" id="oc-sheets-bar" aria-label="Hojas del libro"></div>
+      <div class="oc-ribbon-drawer" id="oc-ribbon-drawer" hidden></div>
+      <footer class="oc-bar oc-bottom" id="oc-bottom"></footer>
+    </section>
+
+    <input type="file" id="oc-file" accept=".xlsx,.xlsm,.xls,.xlsb,.ods,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+
+    <script src="./pwa.js"></script>
+    <script src="./gestos.js"></script>
+    <script src="./app.js"></script>
+    <script type="module">
+      import init, * as bindings from "./__GLUE__";
+      const wasmResponse = await window.ocFetchWasm("./__WASM__", __WASM_BYTES__);
+      const wasm = await init({ module_or_path: wasmResponse });
+      window.wasmBindings = bindings;
+      dispatchEvent(new CustomEvent("TrunkApplicationStarted", { detail: { wasm } }));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+WordCraft, DeckCraft y GridCraft (y sus íconos oficiales) son proyectos de código abierto
+creados por ArtCraft / Storytold y distribuidos bajo doble licencia MIT o Apache-2.0:
+
+- WordCraft: https://github.com/storytold/wordcraft
+- DeckCraft: https://github.com/storytold/deckcraft
+- GridCraft: https://github.com/storytold/gridcraft
+- Sitio oficial: https://getartcraft.com
+
+Este proyecto empaqueta los builds web oficiales sin modificar sus motores WASM,
+agregando una capa de interfaz táctil adaptada a iPhone y soporte PWA sin conexión.
+No está afiliado a ArtCraft ni a Microsoft.

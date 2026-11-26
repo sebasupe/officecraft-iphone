@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es" data-app="deck">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>DeckCraft</title>
+    <meta name="description" content="DeckCraft para iPhone: presentaciones PowerPoint .pptx de código abierto sin conexión." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="DeckCraft" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#c43e1c" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161414" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./ui.css" />
+    <script>
+      window.OC_APP = { id: "deck", name: "DeckCraft", ext: ".pptx", version: "__APP_VERSION__" };
+    </script>
+    __HEAD_LINKS__
+  </head>
+  <body>
+    <div id="oc-splash" role="status" aria-live="polite">
+      <img src="./icons/icon-192.png" alt="" />
+      <h1>DeckCraft</h1>
+      <div id="oc-track"><div id="oc-bar"></div></div>
+      <div id="oc-status">Cargando…</div>
+      <div id="oc-error" hidden></div>
+    </div>
+
+    <!-- Shell principal estilo Microsoft PowerPoint para iPhone -->
+    <section id="oc-home" class="oc-screen" aria-label="DeckCraft Inicio">
+      <header class="oc-app-head" id="oc-app-head"></header>
+      <main class="oc-tab-body" id="oc-tab-body"></main>
+      <button class="oc-create-fab" id="oc-create-fab" type="button" aria-label="Nueva presentación"></button>
+      <nav class="oc-tabbar" id="oc-tabbar" aria-label="Navegación principal"></nav>
+    </section>
+
+    <!-- Editor de presentaciones DeckCraft -->
+    <section id="oc-editor" class="oc-screen" aria-label="Presentación">
+      <header class="oc-bar oc-top oc-top-brand" id="oc-top"></header>
+      <div id="oc-doc">
+        <canvas id="deckcraft_canvas" class="oc-canvas" data-host="page" tabindex="0"></canvas>
+        <div class="oc-press-ring" id="oc-press-ring" hidden aria-hidden="true"></div>
+        <div class="oc-busy" id="oc-busy" hidden>
+          <div class="oc-spinner"></div>
+          <span id="oc-busy-text">Abriendo presentación…</span>
+        </div>
+        <button class="oc-float-pill" id="oc-slide-pill" type="button" hidden>1 / 1</button>
+      </div>
+      <div class="oc-notes-drawer" id="oc-notes-drawer" hidden></div>
+      <div class="oc-filmstrip" id="oc-filmstrip" aria-label="Diapositivas"></div>
+      <div class="oc-ribbon-drawer" id="oc-ribbon-drawer" hidden></div>
+      <footer class="oc-bar oc-bottom" id="oc-bottom"></footer>
+    </section>
+
+    <!-- HUD en modo Presentación a pantalla completa -->
+    <div class="oc-show-hud" id="oc-show-hud" hidden>
+      <button class="oc-show-pill" id="oc-show-prev" type="button" aria-label="Anterior">◀</button>
+      <span class="oc-show-pill" id="oc-show-count">1 / 1</span>
+      <button class="oc-show-pill" id="oc-show-next" type="button" aria-label="Siguiente">▶</button>
+      <button class="oc-show-pill" id="oc-show-exit" type="button" aria-label="Salir de presentación">✕ Salir</button>
+    </div>
+
+    <input type="file" id="oc-file" accept=".pptx,.potx,.ppsx,.ppt,.deckcraft,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden />
+    <input type="file" id="oc-img" accept="image/*" hidden />
+
+    <script src="./pwa.js"></script>
+    <script src="./gestos.js"></script>
+    <script src="./app.js"></script>
+    <script type="module">
+      import init, * as bindings from "./__GLUE__";
+      const wasmResponse = await window.ocFetchWasm("./__WASM__", __WASM_BYTES__);
+      const wasm = await init({ module_or_path: wasmResponse });
+      window.wasmBindings = bindings;
+      dispatchEvent(new CustomEvent("TrunkApplicationStarted", { detail: { wasm } }));
+    </script>
+  </body>
+</html>
