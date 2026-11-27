@@ -15,6 +15,7 @@
   const prefs = Object.assign(
     {
       tema: "auto",
+      calidad: "fluida",
       vistaArchivos: "lista",
       orden: "reciente",
       pantallaActiva: false,
@@ -27,9 +28,13 @@
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
+  function syncThemeBar() {
+    if (window.ocSyncThemeColor) window.ocSyncThemeColor(body.classList.contains("oc-in-editor"));
+  }
   function applyTheme() {
     if (prefs.tema === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", prefs.tema === "oscuro" ? "dark" : "light");
+    syncThemeBar();
   }
   applyTheme();
 
@@ -199,14 +204,21 @@
       },
       onDoubleTap: () => {
         if (!S.doc || S.desktop || S.modal) return;
-        // En Excel para iPhone, doble toque en una celda abre la edición en la barra de fórmulas nativa
-        setTimeout(async () => {
-          await syncActiveCell();
-          const inp = $("oc-fx-input");
-          if (inp) { inp.focus(); inp.select(); }
-        }, 70);
+        // En Safari iOS, focus() DEBE ejecutarse síncronamente dentro del toque para abrir el teclado
+        const inp = $("oc-fx-input");
+        if (inp) {
+          inp.focus();
+          try { inp.select(); } catch (e) {}
+        }
+        syncActiveCell();
       },
       onLongPress: (x, y) => showPressRing(x, y),
+    });
+
+    window.addEventListener("oc:viewport", () => {
+      if (S.ready && body.classList.contains("oc-in-editor")) {
+        gc.ui().then(applyCanvasCrop).catch(() => {});
+      }
     });
 
     initStaticControls();
@@ -1130,6 +1142,7 @@
 
   function showEditor() {
     body.classList.add("oc-in-editor");
+    syncThemeBar();
     renderBottom();
   }
 
@@ -1137,6 +1150,7 @@
     body.classList.remove("oc-in-editor", "oc-desktop", "oc-modal");
     S.desktop = false;
     S.modal = false;
+    syncThemeBar();
     window.ocSyncWakeLock(false);
     if (window.ocUpdateReady) { location.reload(); return; }
     await reloadLibrary();
@@ -1185,6 +1199,7 @@
   // ---------- Barra rápida y Cinta móvil Excel iPhone ----------
   function renderBottom() {
     const items = [
+      { icon: "keyboard", label: "Editar celda", fn: () => { const inp = $("oc-fx-input"); if (inp) { inp.focus(); try { inp.select(); } catch (e) {} } } },
       { icon: "bold", label: "Negrita", fn: () => execGrid("home.bold") },
       { icon: "italic", label: "Cursiva", fn: () => execGrid("home.italic") },
       { icon: "underline", label: "Subrayado", fn: () => execGrid("home.underline") },
@@ -1502,6 +1517,12 @@
           savePrefs();
           applyTheme();
           if (S.ready) gc.run("view.theme", { mode: v === "oscuro" ? "dark" : v === "claro" ? "light" : "system" }).catch(() => {});
+        }),
+        h("div", { class: "oc-label", text: "Fluidez y nitidez (iPhone)" }),
+        seg([["rapida", "Rápida"], ["fluida", "Fluida (2×)"], ["maxima", "Máxima"]], () => prefs.calidad, (v) => {
+          prefs.calidad = v;
+          savePrefs();
+          toast("Se aplicará la nueva fluidez al volver a abrir la app");
         }),
         h("div", { class: "oc-list" }, swRow("Mantener pantalla encendida", () => prefs.pantallaActiva, (v) => { prefs.pantallaActiva = v; savePrefs(); })),
         list([

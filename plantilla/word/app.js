@@ -15,7 +15,9 @@
   const prefs = Object.assign(
     {
       tema: "auto",        // "auto" | "claro" | "oscuro"
-      vista: "movil",      // "movil" (webLayout) | "impresion" (printLayout)
+      vista: "impresion",  // "impresion" (printLayout, hoja completa) | "movil" (webLayout)
+      vistaV2: false,
+      calidad: "fluida",   // "fluida" (2×) | "rapida" (1.5×) | "maxima" (3×)
       paginaOscura: false,
       autor: "",
       vistaArchivos: "lista",
@@ -25,15 +27,25 @@
     },
     readPrefs()
   );
+  // Migra usuarios previos de "movil" a "impresion" (página completa fiel a Word iPhone)
+  if (!prefs.vistaV2) {
+    prefs.vista = "impresion";
+    prefs.vistaV2 = true;
+    savePrefs();
+  }
   function readPrefs() {
     try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch (e) { return {}; }
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
+  function syncThemeBar() {
+    if (window.ocSyncThemeColor) window.ocSyncThemeColor(body.classList.contains("oc-in-editor"));
+  }
   function applyTheme() {
     if (prefs.tema === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", prefs.tema === "oscuro" ? "dark" : "light");
+    syncThemeBar();
   }
   applyTheme();
 
@@ -204,6 +216,7 @@
       mode: () => (S.desktop ? "raton-zoom" : S.modal ? "raton" : "ver"),
       ratio: () => S.ratio,
       axisLock: "doc",
+      autoKeyboard: () => !!(S.doc && !S.desktop && !S.modal),
       onPinchCommit: async ({ scale }) => {
         if (!S.doc || S.desktop || S.modal) return;
         const cur = S.zoomPct || 100;
@@ -217,6 +230,12 @@
         if (S.drawerOpen) closeDrawer();
       },
       onLongPress: (x, y) => showPressRing(x, y),
+    });
+
+    window.addEventListener("oc:viewport", () => {
+      if (S.ready && body.classList.contains("oc-in-editor")) {
+        wc.ui().then(applyCanvasCrop).catch(() => {});
+      }
     });
 
     initStaticControls();
@@ -313,8 +332,10 @@
 
     const left = -(chromeL * ratio);
     const top = -(chromeT * ratio);
-    const width = vw + (chromeL + chromeR) * ratio;
-    const height = vh + (chromeT + chromeB) * ratio;
+    // Oculta la barra de desplazamiento de escritorio del borde derecho en vista móvil táctil
+    const scrollTrim = S.doc && S.doc.mobileView ? 14 * ratio : 0;
+    const width = Math.max(vw, vw + (chromeL + chromeR) * ratio + scrollTrim);
+    const height = Math.max(vh, vh + (chromeT + chromeB) * ratio);
 
     if (
       Math.abs(left - S.crop.l) > 1.5 ||
@@ -1042,6 +1063,13 @@
     }
   }
 
+  function syncDocSurface() {
+    const docEl = $("oc-doc");
+    if (!docEl) return;
+    docEl.classList.toggle("oc-web-view", !!(S.doc && S.doc.mobileView && !S.desktop));
+    docEl.classList.toggle("oc-dark-page", !!prefs.paginaOscura);
+  }
+
   async function prepareEditorView() {
     await wc.run("ui.backstage", { value: false }).catch(() => {});
     await wc.run("ui.collapseRibbon", { value: true }).catch(() => {});
@@ -1054,16 +1082,17 @@
     if (prefs.paginaOscura) {
       await wc.run("view.darkMode", { value: true }).catch(() => {});
     }
+    syncDocSurface();
     await sleep(120);
     const u = await wc.ui();
     applyCanvasCrop(u);
-    await sleep(80);
+    await sleep(90);
     if (prefs.vista !== "movil") {
       await fitPageWidth();
     } else {
-      await wc.run("view.zoom", { value: 115 }).catch(() => {});
-      S.zoomPct = 115;
-      S.fitZoomPct = 115;
+      await wc.run("view.zoom", { value: 100 }).catch(() => {});
+      S.zoomPct = 100;
+      S.fitZoomPct = 100;
     }
     const u2 = await wc.ui().catch(() => null);
     if (u2) applyCanvasCrop(u2);
@@ -1111,6 +1140,7 @@
 
   function showEditor() {
     body.classList.add("oc-in-editor");
+    syncThemeBar();
     renderBottom();
   }
 
@@ -1120,6 +1150,8 @@
     S.modal = false;
     S.searching = false;
     closeDrawer();
+    syncDocSurface();
+    syncThemeBar();
     window.ocSyncWakeLock(false);
     if (window.ocUpdateReady) {
       location.reload();
@@ -1187,10 +1219,11 @@
     S.doc.mobileView = !S.doc.mobileView;
     prefs.vista = S.doc.mobileView ? "movil" : "impresion";
     savePrefs();
+    syncDocSurface();
     if (S.doc.mobileView) {
       await wc.run("view.webLayout").catch(() => {});
-      await wc.run("view.zoom", { value: 115 }).catch(() => {});
-      S.zoomPct = 115;
+      await wc.run("view.zoom", { value: 100 }).catch(() => {});
+      S.zoomPct = 100;
       toast("Vista móvil: texto adaptado al ancho del iPhone");
     } else {
       await wc.run("view.printLayout").catch(() => {});
@@ -1198,6 +1231,8 @@
       await fitPageWidth();
       toast("Diseño de impresión (páginas completas)");
     }
+    await sleep(60);
+    wc.ui().then(applyCanvasCrop).catch(() => {});
     renderTop();
     updatePagePill();
   }
@@ -1214,9 +1249,49 @@
   }
 
   // ---------- Barra inferior rápida + Cinta móvil (exacta a Word iPhone) ----------
+  function openQuickTypeSheet() {
+    const area = h("textarea", {
+      class: "oc-notes-area",
+      style: "min-height:110px;margin-bottom:10px",
+      placeholder: "Escribe o dicta aquí para insertar texto directo en el documento…",
+    });
+    sheet({
+      title: "Escribir / dictar texto",
+      build: (close) => [
+        area,
+        h("div", { class: "oc-btn-row" },
+          h("button", {
+            class: "oc-secondary",
+            type: "button",
+            text: "Nuevo párrafo",
+            onclick: async () => {
+              const t = area.value;
+              if (!t) return;
+              close();
+              await execCmd("text.insert", { text: t + "\n" });
+            },
+          }),
+          h("button", {
+            class: "oc-primary",
+            type: "button",
+            text: "Insertar",
+            onclick: async () => {
+              const t = area.value;
+              if (!t) return;
+              close();
+              await execCmd("text.insert", { text: t });
+            },
+          })
+        ),
+      ],
+    });
+    area.focus();
+  }
+
   function renderBottom() {
     const bar = $("oc-bottom");
     const items = [
+      { id: "kb", icon: "keyboard", label: "Teclado", fn: () => { if (!gestures || !gestures.focusKeyboard()) openQuickTypeSheet(); } },
       { id: "bold", icon: "bold", label: "Negrita", cmd: "format.bold", key: "bold" },
       { id: "italic", icon: "italic", label: "Cursiva", cmd: "format.italic", key: "italic" },
       { id: "underline", icon: "underline", label: "Subrayado", cmd: "format.underline", key: "underline" },
@@ -1449,6 +1524,7 @@
         rtile("moon", "Página oscura", async () => {
           prefs.paginaOscura = !prefs.paginaOscura;
           savePrefs();
+          syncDocSurface();
           await execCmd("view.darkMode", { value: prefs.paginaOscura });
         }),
         rtile("zoom", "Ajustar al ancho", fitPageWidth),
@@ -1668,7 +1744,7 @@
         ),
         list([
           { i: "mobileView", t: S.doc.mobileView ? "Cambiar a Diseño de impresión" : "Cambiar a Vista móvil", run: () => { close(); toggleMobileView(); } },
-          { i: "moon", t: prefs.paginaOscura ? "Desactivar página oscura" : "Activar página oscura", run: () => { close(); prefs.paginaOscura = !prefs.paginaOscura; savePrefs(); execCmd("view.darkMode", { value: prefs.paginaOscura }); } },
+          { i: "moon", t: prefs.paginaOscura ? "Desactivar página oscura" : "Activar página oscura", run: () => { close(); prefs.paginaOscura = !prefs.paginaOscura; savePrefs(); syncDocSurface(); execCmd("view.darkMode", { value: prefs.paginaOscura }); } },
         ]),
       ],
     });
@@ -1695,6 +1771,7 @@
       title: S.doc.meta.nombre,
       build: (close) => [
         list([
+          { i: "keyboard", t: "Escribir / dictar texto", small: "Teclado iOS", run: () => { close(); openQuickTypeSheet(); } },
           { i: "check", t: "Guardar ahora", run: async () => { close(); try { await saveActive(); toast("Guardado en este iPhone"); } catch (e) { toast(e.message); } } },
           { i: "star", t: S.doc.meta.destacado ? "Quitar de destacados" : "Destacar", run: () => { close(); toggleStar(S.doc.meta); } },
           { i: "rename", t: "Renombrar", run: () => { close(); renameSheet(S.doc.meta); } },
@@ -1724,7 +1801,13 @@
           if (S.ready) wc.run("ui.theme", { value: v === "oscuro" ? "dark" : v === "claro" ? "light" : "system" }).catch(() => {});
         }),
         h("div", { class: "oc-label", text: "Vista al abrir documentos" }),
-        seg([["movil", "Vista móvil"], ["impresion", "Diseño de impresión"]], () => prefs.vista, (v) => { prefs.vista = v; savePrefs(); }),
+        seg([["impresion", "Diseño de impresión"], ["movil", "Vista móvil"]], () => prefs.vista, (v) => { prefs.vista = v; savePrefs(); }),
+        h("div", { class: "oc-label", text: "Fluidez y nitidez (iPhone)" }),
+        seg([["rapida", "Rápida"], ["fluida", "Fluida (2×)"], ["maxima", "Máxima"]], () => prefs.calidad, (v) => {
+          prefs.calidad = v;
+          savePrefs();
+          toast("Se aplicará la nueva fluidez al volver a abrir la app");
+        }),
         h("div", { class: "oc-label", text: "Tu nombre de autor" }),
         authorInp,
         h("div", { class: "oc-list" }, swRow("Mantener pantalla encendida", () => prefs.pantallaActiva, (v) => { prefs.pantallaActiva = v; savePrefs(); })),

@@ -8,24 +8,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="GridCraft" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
-    <meta name="theme-color" content="#107c41" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#101814" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
     <link rel="stylesheet" href="./ui.css" />
     <script>
       window.OC_APP = { id: "grid", name: "GridCraft", ext: ".xlsx", version: "__APP_VERSION__" };
-      // Oculta nativamente la barra de título y pestaña Archivo de escritorio en GridCraft
-      if (!/[?&]chrome=/.test(location.search)) {
-        try {
-          var sep = location.search ? "&" : "?";
-          history.replaceState(history.state, "", location.pathname + location.search + sep + "chrome=none" + location.hash);
-        } catch (e) {}
-      }
     </script>
+    <script src="./boot.js"></script>
     __HEAD_LINKS__
   </head>
   <body>

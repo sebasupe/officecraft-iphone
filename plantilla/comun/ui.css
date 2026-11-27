@@ -59,9 +59,9 @@
     --danger: #ff453a;
     color-scheme: dark;
   }
-  :root[data-app="word"]:not([data-theme="light"]) { --brand: #4b8df8; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
-  :root[data-app="deck"]:not([data-theme="light"]) { --brand: #f26c47; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
-  :root[data-app="grid"]:not([data-theme="light"]) { --brand: #2fb167; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
+  :root[data-app="word"]:not([data-theme="light"]) { --brand: #4b8df8; --brand-bar: #1b4ea0; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
+  :root[data-app="deck"]:not([data-theme="light"]) { --brand: #f26c47; --brand-bar: #b53817; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
+  :root[data-app="grid"]:not([data-theme="light"]) { --brand: #2fb167; --brand-bar: #0f6b38; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
 }
 
 :root[data-theme="dark"] {
@@ -79,9 +79,9 @@
   --danger: #ff453a;
   color-scheme: dark;
 }
-:root[data-theme="dark"][data-app="word"] { --brand: #4b8df8; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
-:root[data-theme="dark"][data-app="deck"] { --brand: #f26c47; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
-:root[data-theme="dark"][data-app="grid"] { --brand: #2fb167; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
+:root[data-theme="dark"][data-app="word"] { --brand: #4b8df8; --brand-bar: #1b4ea0; --brand-press: #357ae8; --brand-soft: rgba(75, 141, 248, 0.2); }
+:root[data-theme="dark"][data-app="deck"] { --brand: #f26c47; --brand-bar: #b53817; --brand-press: #de5732; --brand-soft: rgba(242, 108, 71, 0.2); }
+:root[data-theme="dark"][data-app="grid"] { --brand: #2fb167; --brand-bar: #0f6b38; --brand-press: #239655; --brand-soft: rgba(47, 177, 103, 0.2); }
 
 * { box-sizing: border-box; }
 html, body {
@@ -127,10 +127,13 @@ svg.ic.ic-fill { fill: currentColor; stroke: currentColor; }
 
 /* ---------- Pantallas principales ---------- */
 .oc-screen { position: fixed; inset: 0; width: 100%; max-width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
-#oc-editor { z-index: 1; background: var(--doc-bg); }
+#oc-editor { z-index: 1; background: var(--doc-bg); top: var(--oc-vtop, 0px); height: var(--oc-vh, 100%); bottom: auto; }
 #oc-home { z-index: 2; background: var(--bg); transition: transform 0.26s cubic-bezier(.32, .72, 0, 1), opacity 0.24s ease; }
 body.oc-in-editor #oc-home { transform: translateX(-24%); opacity: 0; pointer-events: none; }
 body:not(.oc-in-editor) #oc-editor { visibility: hidden; }
+body.oc-kb-open .oc-bottom { padding-bottom: 4px; }
+body.oc-kb-open .oc-ribbon-drawer { max-height: 36vh; padding-bottom: 4px; }
+body.oc-kb-open .oc-filmstrip { display: none; }
 
 /* ---------- Cabecera Home (estilo Microsoft Office para iPhone) ---------- */
 .oc-app-head {
@@ -341,7 +344,7 @@ body:not(.oc-in-editor) #oc-editor { visibility: hidden; }
 }
 /* Cabecera con acento de color Microsoft Office (opcional vía .oc-top-brand) */
 .oc-top.oc-top-brand {
-  background: var(--brand);
+  background: var(--brand-bar, var(--brand));
   color: #ffffff;
   border-bottom-color: rgba(255, 255, 255, 0.16);
 }
@@ -383,6 +386,8 @@ body:not(.oc-in-editor) #oc-editor { visibility: hidden; }
   overflow: hidden;
   background: var(--doc-bg);
 }
+#oc-doc.oc-web-view { background: #ffffff; }
+#oc-doc.oc-web-view.oc-dark-page { background: #1c1c1e; }
 .oc-canvas {
   position: absolute;
   left: var(--oc-crop-left, 0px);

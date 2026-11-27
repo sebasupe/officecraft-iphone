@@ -15,6 +15,7 @@
   const prefs = Object.assign(
     {
       tema: "auto",
+      calidad: "fluida",
       autor: "",
       vistaArchivos: "lista",
       orden: "reciente",
@@ -28,9 +29,15 @@
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
+  function syncThemeBar() {
+    if (!window.ocSyncThemeColor) return;
+    if (body.classList.contains("oc-show")) window.ocSyncThemeColor(true, "#000000");
+    else window.ocSyncThemeColor(body.classList.contains("oc-in-editor"));
+  }
   function applyTheme() {
     if (prefs.tema === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", prefs.tema === "oscuro" ? "dark" : "light");
+    syncThemeBar();
   }
   applyTheme();
 
@@ -244,6 +251,12 @@
       onLongPress: (x, y) => { if (!S.showing) showPressRing(x, y); },
     });
 
+    window.addEventListener("oc:viewport", () => {
+      if (S.ready && body.classList.contains("oc-in-editor") && !S.showing) {
+        dc.ui().then(applyCanvasCrop).catch(() => {});
+      }
+    });
+
     initStaticControls();
     await reloadLibrary();
     renderShell();
@@ -367,6 +380,7 @@
         S.showing = showing;
         body.classList.toggle("oc-show", showing);
         $("oc-show-hud").hidden = !showing;
+        syncThemeBar();
         applyCanvasCrop(showing ? null : u);
       }
       if (showing && u.showing) {
@@ -923,6 +937,7 @@
 
   async function prepareEditorView() {
     const isDark = prefs.tema === "oscuro" || (prefs.tema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+    await dc.run("app.backstage", { on: false }).catch(() => {});
     await dc.set({ ribbonCollapsed: true, notes: false, pane: null, view: "normal", dark: isDark }).catch(() => {});
     await dc.tool("select").catch(() => {});
     S.activeTool = "select";
@@ -950,6 +965,7 @@
 
   function showEditor() {
     body.classList.add("oc-in-editor");
+    syncThemeBar();
     renderBottom();
   }
 
@@ -959,6 +975,7 @@
     S.modal = false;
     S.showing = false;
     $("oc-show-hud").hidden = true;
+    syncThemeBar();
     window.ocSyncWakeLock(false);
     if (window.ocUpdateReady) { location.reload(); return; }
     await reloadLibrary();
@@ -1176,9 +1193,92 @@
     await dc.showStart(fromIdx != null ? fromIdx : 0).catch((e) => toast(e.message));
   }
 
+  // ---------- Editor nativo de textos de diapositiva (ideal para teclado de iPhone) ----------
+  async function openTextEditorForShape(shapeId, label, initialText) {
+    let cur = initialText != null ? String(initialText) : "";
+    if (shapeId != null && initialText == null) {
+      const res = await dc.run("text.get", { id: shapeId }).catch(() => null);
+      if (res && typeof res.text === "string") cur = res.text;
+    }
+    const area = h("textarea", {
+      class: "oc-notes-area",
+      style: "min-height:110px;margin-bottom:10px",
+      placeholder: "Escribe el texto de este bloque…",
+    });
+    area.value = cur;
+    sheet({
+      title: label || "Editar texto",
+      build: (close) => [
+        area,
+        h("button", {
+          class: "oc-primary",
+          type: "button",
+          text: "Aplicar texto",
+          onclick: async () => {
+            close();
+            const params = shapeId != null ? { id: shapeId, text: area.value } : { text: area.value };
+            await execDeck("text.set", params);
+            refreshThumbnails(false);
+          },
+        }),
+      ],
+    });
+    area.focus();
+  }
+
+  async function editSlideTextSheet() {
+    if (!S.doc) return;
+    try {
+      const d = await dc.doc().catch(() => null);
+      const selIds = d && d.selection && Array.isArray(d.selection.shapes) ? d.selection.shapes : [];
+      if (selIds.length === 1) {
+        await openTextEditorForShape(selIds[0], "Editar texto seleccionado", null);
+        return;
+      }
+      const sl = await dc.run("slide.inspect", { index: S.doc.slideIdx }).catch(() => null);
+      const shapes = (sl && Array.isArray(sl.shapes) ? sl.shapes : []).filter((sh) => sh && sh.id != null);
+      if (!shapes.length) {
+        await execDeck("shape.insert", { preset: "rect", rect: [140, 180, 640, 140], text: "Nuevo texto" });
+        toast("Cuadro de texto creado");
+        return;
+      }
+      const enriched = [];
+      for (const sh of shapes) {
+        const tg = await dc.run("text.get", { id: sh.id }).catch(() => null);
+        if (tg && typeof tg.text === "string") {
+          enriched.push({ id: sh.id, name: sh.name || sh.kind || "Texto", text: tg.text });
+        }
+      }
+      if (enriched.length === 1) {
+        await openTextEditorForShape(enriched[0].id, enriched[0].name, enriched[0].text);
+        return;
+      }
+      if (!enriched.length) {
+        await openTextEditorForShape(shapes[0].id, shapes[0].name || "Texto", "");
+        return;
+      }
+      sheet({
+        title: "Editar texto de diapositiva " + (S.doc.slideIdx + 1),
+        build: (close) => [
+          list(
+            enriched.map((item, idx) => ({
+              i: "edit",
+              t: item.text.trim().split("\n")[0].slice(0, 44) || (idx === 0 ? "Título" : "Bloque " + (idx + 1)),
+              small: item.name,
+              run: () => { close(); openTextEditorForShape(item.id, item.name, item.text); },
+            }))
+          ),
+        ],
+      });
+    } catch (e) {
+      toast("Toca un cuadro de texto para editarlo");
+    }
+  }
+
   // ---------- Barra rápida y Cinta móvil PowerPoint iPhone ----------
   function renderBottom() {
     const items = [
+      { icon: "edit", label: "Editar texto", fn: editSlideTextSheet },
       { icon: "slidePlus", label: "Nueva diap.", fn: newSlideSheet },
       { icon: "textBox", label: "Texto", fn: () => execDeck("shape.insert", { preset: "rect", rect: [180, 180, 560, 140], text: "Nuevo texto" }) },
       { icon: "image", label: "Imagen", fn: () => $("oc-img").click() },
@@ -1504,6 +1604,12 @@
           applyTheme();
           const dark = v === "oscuro" || (v === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
           if (S.ready) dc.set({ dark }).catch(() => {});
+        }),
+        h("div", { class: "oc-label", text: "Fluidez y nitidez (iPhone)" }),
+        seg([["rapida", "Rápida"], ["fluida", "Fluida (2×)"], ["maxima", "Máxima"]], () => prefs.calidad, (v) => {
+          prefs.calidad = v;
+          savePrefs();
+          toast("Se aplicará la nueva fluidez al volver a abrir la app");
         }),
         h("div", { class: "oc-list" }, swRow("Mantener pantalla encendida al presentar", () => prefs.pantallaActiva, (v) => { prefs.pantallaActiva = v; savePrefs(); })),
         list([

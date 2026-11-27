@@ -244,28 +244,73 @@
       return [cap(vxSum / wSum), cap(vySum / wSum)];
     }
 
+    function isEguiTextAgent(el) {
+      if (!el || el === document.body || el === canvas) return false;
+      const isField = el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable;
+      if (!isField) return false;
+      // No confundir con nuestros campos nativos (barra de fórmulas, búsqueda, hojas modales)
+      if (el.id && el.id.startsWith("oc-")) return false;
+      if (el.closest && el.closest(".oc-sheet, .oc-formula-bar, .oc-notes-drawer, .oc-top, .oc-app-head")) return false;
+      if (canvas.parentNode && canvas.parentNode.contains(el)) return true;
+      // eframe inserta un <input> oculto (opacity:0, pointer-events:none) en document.body
+      const st = el.style;
+      if (el.id && /egui|text_agent/i.test(el.id)) return true;
+      if (st && (st.pointerEvents === "none" || st.opacity === "0")) return true;
+      return false;
+    }
+
+    function findTextAgent() {
+      const inputs = document.querySelectorAll("input, textarea");
+      for (let i = 0; i < inputs.length; i++) {
+        if (isEguiTextAgent(inputs[i])) return inputs[i];
+      }
+      return null;
+    }
+
     function typing() {
-      const active = document.activeElement;
-      if (!active || active === document.body || active === canvas) return false;
-      const isField = active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable;
-      return !!(isField && canvas.parentNode && canvas.parentNode.contains(active));
+      return isEguiTextAgent(document.activeElement);
     }
 
     function ensureFocus() {
       const active = document.activeElement;
-      if (active === canvas) return;
-      if (active && active !== document.body && canvas.parentNode && canvas.parentNode.contains(active)) return;
+      if (active === canvas || isEguiTextAgent(active)) return;
       try {
         canvas.focus({ preventScroll: true });
       } catch (e) {}
+    }
+
+    function focusKeyboard() {
+      const agent = findTextAgent();
+      if (agent) {
+        try {
+          agent.focus({ preventScroll: true });
+          return true;
+        } catch (e) {}
+      }
+      const r = canvas.getBoundingClientRect();
+      click(r.left + r.width * 0.5, r.top + r.height * 0.35);
+      const agent2 = findTextAgent();
+      if (agent2) {
+        try {
+          agent2.focus({ preventScroll: true });
+          return true;
+        } catch (e) {}
+      }
+      return false;
     }
 
     function click(x, y) {
       fire.move(x, y);
       fire.down(x, y);
       fire.up(x, y);
-      // En Safari iOS un segundo pointerup garantiza la apertura del teclado virtual al primer toque
+      // En Safari iOS un segundo pointerup síncrono dentro del toque abre el teclado al 1er toque
       for (let i = 0; i < 2 && !typing(); i++) fire.up(x, y);
+      if (!typing()) {
+        const agent = findTextAgent();
+        if (agent && opts.autoKeyboard && opts.autoKeyboard()) {
+          try { agent.focus({ preventScroll: true }); } catch (e) {}
+        }
+      }
     }
 
     function startPinch(a, b, mode) {
@@ -619,6 +664,7 @@
       },
       busy: () => !!(g || fling || committingPinch || performance.now() < idleUntil),
       typing,
+      focusKeyboard,
       zoomWheel,
       scrollNow: (dx, dy) => {
         const r = canvas.getBoundingClientRect();

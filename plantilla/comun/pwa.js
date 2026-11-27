@@ -57,6 +57,35 @@
   window.ocHideSplash = hideSplash;
   window.ocShowError = showError;
 
+  // ---------- Adaptación al teclado virtual del iPhone (visualViewport) ----------
+  // Mantiene la barra rápida de formato (B/I/U/fx) anclada justo encima del teclado iOS.
+  (function initVisualViewport() {
+    var vv = window.visualViewport;
+    if (!vv) return;
+    var raf = 0;
+    var lastH = 0;
+    function sync() {
+      raf = 0;
+      var h = Math.round(vv.height);
+      var top = Math.max(0, Math.round(vv.offsetTop));
+      var kbOpen = window.innerHeight - h > 120;
+      document.documentElement.style.setProperty("--oc-vh", h + "px");
+      document.documentElement.style.setProperty("--oc-vtop", top + "px");
+      document.body.classList.toggle("oc-kb-open", kbOpen);
+      if (Math.abs(h - lastH) > 4) {
+        lastH = h;
+        window.dispatchEvent(new CustomEvent("oc:viewport", { detail: { height: h, top: top, keyboard: kbOpen } }));
+      }
+    }
+    function schedule() {
+      if (!raf) raf = requestAnimationFrame(sync);
+    }
+    vv.addEventListener("resize", schedule);
+    vv.addEventListener("scroll", schedule);
+    window.addEventListener("orientationchange", function () { setTimeout(schedule, 150); });
+    sync();
+  })();
+
   window.addEventListener(
     "error",
     (e) => {
